@@ -1,0 +1,99 @@
+{
+  "upstreams": {
+    "default": {
+      "target": "http://localhost:4001",
+      "timeout": 30000,
+      "healthCheck": {
+        "path": "/health",
+        "intervalMs": 10000,
+        "timeoutMs": 5000,
+        "unhealthyThreshold": 3,
+        "healthyThreshold": 2
+      }
+    }
+  },
+  "routes": [
+    {
+      "path": "/api/public/*",
+      "upstream": "default",
+      "authentication": false,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 200
+      },
+      "ipAllowlist": [],
+      "ipDenylist": [],
+      "timeout": 10000
+    },
+    {
+      "path": "/api/users",
+      "upstream": "default",
+      "authentication": true,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 100
+      },
+      "ipAllowlist": [],
+      "ipDenylist": [],
+      "timeout": 15000
+    },
+    {
+      "path": "/api/admin/*",
+      "upstream": "default",
+      "authentication": true,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 50
+      },
+      "ipAllowlist": [
+        "127.0.0.1",
+        "10.0.0.0/8",
+        "192.168.0.0/16"
+      ],
+      "ipDenylist": [],
+      "timeout": 30000,
+      "requireMTLS": false
+    },
+    {
+      "path": "/api/internal/*",
+      "upstream": "default",
+      "authentication": true,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 30
+      },
+      "ipAllowlist": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "ipDenylist": [],
+      "timeout": 30000,
+      "requireMTLS": false
+    },
+    {
+      "path": "/api/reports",
+      "upstream": "default",
+      "authentication": true,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 60
+      },
+      "ipAllowlist": [],
+      "ipDenylist": [],
+      "timeout": 60000
+    },
+    {
+      "path": "/api/*",
+      "upstream": "default",
+      "authentication": true,
+      "rateLimit": {
+        "windowMs": 60000,
+        "maxRequests": 100
+      },
+      "ipAllowlist": [],
+      "ipDenylist": [],
+      "timeout": 30000
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "zero-trust-api-gateway",
+  "version": "1.0.0",
+  "description": "Zero-Trust API Gateway with JWT/JWKS auth, RBAC + ABAC policy engine, per-identity rate limiting, and tamper-proof audit logging",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "demo:upstream": "node demo/upstream-api.js",
+    "demo:client": "node demo/test-client.js",
+    "demo": "node demo/upstream-api.js & sleep 1 && node src/index.js & sleep 1 && node demo/test-client.js",
+    "test": "node --test tests/gateway.test.js"
+  },
+  "keywords": [
+    "zero-trust",
+    "api-gateway",
+    "jwt",
+    "jwks",
+    "rbac",
+    "abac",
+    "identity",
+    "security",
+    "reverse-proxy",
+    "okta"
+  ],
+  "author": "Jesse Mandevamirtham",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "helmet": "^7.1.0",
+    "http-proxy": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
+    "uuid": "^9.0.1"
+  }
+}

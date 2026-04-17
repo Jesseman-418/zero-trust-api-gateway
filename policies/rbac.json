@@ -1,0 +1,42 @@
+{
+  "roles": {
+    "admin": {
+      "permissions": ["read", "write", "delete", "admin"],
+      "description": "Full system access including administrative operations"
+    },
+    "user": {
+      "permissions": ["read", "write"],
+      "description": "Standard user with read and write access"
+    },
+    "viewer": {
+      "permissions": ["read"],
+      "description": "Read-only access to permitted resources"
+    },
+    "service": {
+      "permissions": ["read", "write", "delete"],
+      "description": "Service account for machine-to-machine communication"
+    }
+  },
+  "routes": {
+    "/api/users": {
+      "GET": ["read"],
+      "POST": ["write"],
+      "PUT": ["write"],
+      "PATCH": ["write"],
+      "DELETE": ["admin"]
+    },
+    "/api/admin/*": {
+      "*": ["admin"]
+    },
+    "/api/reports": {
+      "GET": ["read"],
+      "POST": ["write"]
+    },
+    "/api/internal/*": {
+      "*": ["admin", "service"]
+    },
+    "/api/public/*": {
+      "GET": []
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "policies": [
+    {
+      "name": "business-hours-only",
+      "description": "Restrict admin endpoints to business hours (9 AM - 5 PM UTC)",
+      "effect": "deny",
+      "condition": {
+        "time.hour": { "notBetween": [9, 17] }
+      },
+      "resources": ["/api/admin/*"]
+    },
+    {
+      "name": "geo-restrict-internal",
+      "description": "Restrict internal APIs to private network ranges",
+      "effect": "deny",
+      "condition": {
+        "request.ip": { "notInCIDR": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8"] }
+      },
+      "resources": ["/api/internal/*"]
+    },
+    {
+      "name": "weekend-readonly",
+      "description": "Allow only read operations on weekends",
+      "effect": "deny",
+      "condition": {
+        "time.dayOfWeek": { "in": [0, 6] },
+        "request.method": { "in": ["POST", "PUT", "PATCH", "DELETE"] }
+      },
+      "resources": ["/api/*"]
+    },
+    {
+      "name": "require-mfa-for-delete",
+      "description": "Require MFA claim for destructive operations",
+      "effect": "deny",
+      "condition": {
+        "request.method": { "equals": "DELETE" },
+        "token.amr": { "notContains": "mfa" }
+      },
+      "resources": ["/api/*"]
+    }
+  ]
+}

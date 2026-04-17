@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zero-Trust Gateway Dashboard</title>
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface2: #1a2332;
+      --border: #2d3748;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --purple: #a855f7;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.purple { color: var(--purple); }
+
+    .big-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .big-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .audit-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .audit-table td {
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .audit-table tr:hover { background: var(--surface2); }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+    .chain-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .chain-valid { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+    .chain-invalid { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+
+    .refresh-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .refresh-btn:hover { border-color: var(--accent); }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .auto-refresh {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .full-width { grid-column: 1 / -1; }
+    .overflow-x { overflow-x: auto; }
+
+    .upstream-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-green { background: var(--green); }
+    .dot-red { background: var(--red); }
+    .dot-yellow { background: var(--yellow); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Zero-Trust API Gateway</h1>
+      <div class="subtitle">Real-time monitoring dashboard — JWT/JWKS, RBAC + ABAC, per-identity rate limiting</div>
+    </div>
+    <div class="auto-refresh">
+      <label><input type="checkbox" id="autoRefresh" checked> Auto-refresh (5s)</label>
+      <button class="refresh-btn" onclick="refreshAll()">Refresh Now</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Request Stats -->
+    <div class="card">
+      <div class="card-title">Requests</div>
+      <div id="requestStats">Loading...</div>
+    </div>
+
+    <!-- Latency -->
+    <div class="card">
+      <div class="card-title">Latency (ms)</div>
+      <div id="latencyStats">Loading...</div>
+    </div>
+
+    <!-- Errors -->
+    <div class="card">
+      <div class="card-title">Errors</div>
+      <div id="errorStats">Loading...</div>
+    </div>
+
+    <!-- Upstreams -->
+    <div class="card">
+      <div class="card-title">Upstream Health</div>
+      <div id="upstreamStatus">Loading...</div>
+    </div>
+
+    <!-- Audit Chain -->
+    <div class="card">
+      <div class="card-title">Audit Chain Integrity</div>
+      <div id="chainStatus">Loading...</div>
+    </div>
+
+    <!-- Rate Limiting -->
+    <div class="card">
+      <div class="card-title">Rate Limit Status</div>
+      <div id="rateLimitStats">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Audit Log -->
+  <div class="card full-width overflow-x" style="margin-top: 8px;">
+    <div class="card-title">Recent Audit Log</div>
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Identity</th>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Status</th>
+          <th>Auth</th>
+          <th>Latency</th>
+          <th>Chain Hash</th>
+        </tr>
+      </thead>
+      <tbody id="auditLog">
+        <tr><td colspan="8" style="text-align:center;color:var(--text-dim)">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const BASE = window.location.origin;
+
+    async function fetchJSON(path) {
+      try {
+        const res = await fetch(BASE + path);
+        return await res.json();
+      } catch { return null; }
+    }
+
+    function renderRequestStats(m) {
+      if (!m) return 'Unavailable';
+      return `
+        <div class="big-number">${m.requests.total.toLocaleString()}</div>
+        <div class="big-label">total requests</div>
+        <div style="margin-top:12px">
+          <div class="stat"><span>Req/sec</span><span class="stat-value accent">${m.requests.requestsPerSecond.toFixed(2)}</span></div>
+          <div class="stat"><span>Uptime</span><span class="stat-value">${m.gateway.uptime.human}</span></div>
+          ${Object.entries(m.requests.byMethod).map(([k,v]) =>
+            `<div class="stat"><span>${k}</span><span class="stat-value">${v}</span></div>`
+          ).join('')}
+        </div>
+      `;
+    }
+
+    function renderLatency(m) {
+      if (!m) return 'Unavailable';
+      return `
+        <div class="stat"><span>p50</span><span class="stat-value green">${m.latency.p50}ms</span></div>
+        <div class="stat"><span>p95</span><span class="stat-value yellow">${m.latency.p95}ms</span></div>
+        <div class="stat"><span>p99</span><span class="stat-value red">${m.latency.p99}ms</span></div>
+        <div class="stat"><span>Min</span><span class="stat-value">${m.latency.min}ms</span></div>
+        <div class="stat"><span>Max</span><span class="stat-value">${m.latency.max}ms</span></div>
+        <div class="stat"><span>Avg</span><span class="stat-value accent">${m.latency.avg}ms</span></div>
+        <div class="stat"><span>Samples</span><span class="stat-value">${m.latency.samples}</span></div>
+      `;
+    }
+
+    function renderErrors(m) {
+      if (!m) return 'Unavailable';
+      return `
+        <div class="stat"><span>Total errors</span><span class="stat-value ${m.errors.total > 0 ? 'red' : 'green'}">${m.errors.total}</span></div>
+        <div class="stat"><span>Auth failures (401)</span><span class="stat-value">${m.errors.auth}</span></div>
+        <div class="stat"><span>Forbidden (403)</span><span class="stat-value">${m.errors.forbidden}</span></div>
+        <div class="stat"><span>Rate limited (429)</span><span class="stat-value">${m.errors.rateLimited}</span></div>
+        <div class="stat"><span>Upstream (502/504)</span><span class="stat-value">${m.errors.upstream}</span></div>
+        <div class="stat"><span>Internal (500)</span><span class="stat-value">${m.errors.internal}</span></div>
+      `;
+    }
+
+    function renderUpstreams(h) {
+      if (!h) return 'Unavailable';
+      return Object.entries(h.upstreams).map(([name, u]) => {
+        const dotClass = u.state === 'closed' ? 'dot-green' : u.state === 'open' ? 'dot-red' : 'dot-yellow';
+        const stateLabel = u.state.toUpperCase();
+        return `
+          <div class="stat">
+            <span class="upstream-state"><span class="dot ${dotClass}"></span> ${name}</span>
+            <span class="stat-value">${stateLabel}</span>
+          </div>
+          <div class="stat"><span style="padding-left:16px">Target</span><span class="stat-value" style="font-size:11px">${u.target}</span></div>
+        `;
+      }).join('');
+    }
+
+    function renderChain(audit) {
+      if (!audit?.chain) return 'Unavailable';
+      const c = audit.chain;
+      const cls = c.valid ? 'chain-valid' : 'chain-invalid';
+      const icon = c.valid ? '\u2713' : '\u2717';
+      const label = c.valid ? 'Chain intact — no tampering detected' : `Chain broken at entry ${c.brokenAt}`;
+      return `
+        <div class="chain-status ${cls}">${icon} ${label}</div>
+        <div class="stat" style="margin-top:8px"><span>Total entries</span><span class="stat-value">${c.totalEntries}</span></div>
+      `;
+    }
+
+    function renderRateLimit(rl) {
+      if (!rl) return 'Unavailable';
+      return `
+        <div class="stat"><span>Tracked identities</span><span class="stat-value accent">${rl.totalIdentities}</span></div>
+        ${rl.entries.slice(0, 8).map(e => `
+          <div class="stat">
+            <span style="font-size:11px">${e.identity.substring(0,20)}</span>
+            <span class="stat-value ${e.currentRequests >= e.maxRequests ? 'red' : 'green'}">${e.currentRequests}/${e.maxRequests}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function statusBadge(code) {
+      if (code >= 200 && code < 300) return `<span class="badge badge-green">${code}</span>`;
+      if (code >= 400 && code < 500) return `<span class="badge badge-yellow">${code}</span>`;
+      if (code >= 500) return `<span class="badge badge-red">${code}</span>`;
+      return `<span class="badge badge-blue">${code}</span>`;
+    }
+
+    function renderAuditLog(audit) {
+      if (!audit?.entries?.length) return '<tr><td colspan="8" style="text-align:center;color:var(--text-dim)">No entries</td></tr>';
+      return audit.entries.slice(-30).reverse().map(e => `
+        <tr>
+          <td>${new Date(e.timestamp).toLocaleTimeString()}</td>
+          <td>${e.identity || 'anon'}</td>
+          <td><span class="badge badge-blue">${e.action.method}</span></td>
+          <td>${e.action.path}</td>
+          <td>${statusBadge(e.response.statusCode)}</td>
+          <td>${e.authorization?.allowed ? '<span class="badge badge-green">allow</span>' : '<span class="badge badge-red">deny</span>'}</td>
+          <td>${e.response.latencyMs}ms</td>
+          <td style="font-size:10px;color:var(--text-dim)">${(e.chainHash || '').substring(0,12)}...</td>
+        </tr>
+      `).join('');
+    }
+
+    async function refreshAll() {
+      const [metrics, health, audit, rateLimit] = await Promise.all([
+        fetchJSON('/gateway/metrics'),
+        fetchJSON('/gateway/health'),
+        fetchJSON('/gateway/audit?limit=50'),
+        fetchJSON('/gateway/ratelimit'),
+      ]);
+
+      document.getElementById('requestStats').innerHTML = renderRequestStats(metrics);
+      document.getElementById('latencyStats').innerHTML = renderLatency(metrics);
+      document.getElementById('errorStats').innerHTML = renderErrors(metrics);
+      document.getElementById('upstreamStatus').innerHTML = renderUpstreams(health);
+      document.getElementById('chainStatus').innerHTML = renderChain(audit);
+      document.getElementById('rateLimitStats').innerHTML = renderRateLimit(rateLimit);
+      document.getElementById('auditLog').innerHTML = renderAuditLog(audit);
+    }
+
+    // Initial load
+    refreshAll();
+
+    // Auto-refresh
+    setInterval(() => {
+      if (document.getElementById('autoRefresh').checked) refreshAll();
+    }, 5000);
+  </script>
+</body>
+</html>
